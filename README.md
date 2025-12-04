@@ -1,111 +1,145 @@
-# Gensyn-nodeGuide
-The cleanest, guide to run  Gensyn RL-Swarm +  on Mac/Linux 
-Custom Gensyn RL-Swarm Node Installation Guide (Mac/Linux Edition)Hey swarm! Building on that upgrade guide we whipped up, here's the full fresh install for Gensyn's RL-Swarm node—straight from the official community repo,  for zero headaches. This gets you contributing compute to decentralized AI in ~15-30 mins. We're talking earning testnet points, training models on your idle GPU/CPU, and joining the hive before mainnet drops.Target Setup: Mac (local) or Linux VPS (recommended for 24/7 uptime). Windows? Use WSL2 and treat it like Linux.Why Bother? Gensyn turns your rig into a verifiable ML supercomputer. No Big Tech middlemen—just stake, swarm, and stack rewards.Current Version: CodeZero release (as of Dec 2025). Always peek at the repo for patches.Device/System RequirementsHardware: GPU/CPU with ≥8GB RAM (16GB+ for stability). Idle laptop works, but VPS crushes it.
-Access: SSH for VPS (ssh username@ip).
-Internet: Stable connection; open ports 3000/5000 if firewalled.
+Gensyn Node Setup GuideWelcome to the official community guide for running a Gensyn node! Gensyn is a decentralized protocol that aggregates global compute resources into a unified network for machine learning workloads. By running a node, you contribute to collaborative AI training (like RL Swarm), earn testnet rewards, and help shape the future of open AI. This guide focuses on the RL Swarm application, the primary way to participate in the testnet as of December 2025.Why run a node?  Earn $GENS testnet tokens for compute contributions.  
+Access leaderboards and track your performance.  
+Join a permissionless network—no waitlist required.
 
-Pre-Requirements: Tools SetupFire these in your terminal. We'll check versions after.For Linux/WSL (Ubuntu/Debian):bash
+ Disclaimer: This guide is for educational purposes. Always DYOR; running a node involves costs (e.g., VPS/GPU rental). Rewards are not guaranteed.PrerequisitesHardware RequirementsRecommended: GPU with at least 12GB VRAM (e.g., RTX 4090 or A100). Lower-end GPUs (12GB+) work but may limit performance.
+CPU/RAM: 6+ cores, 16GB+ RAM.
+Storage: 200GB+ SSD (for models and logs).
+OS: Ubuntu 22.04 LTS (preferred for stability).
+Internet: Stable connection with port 3000 open for tunneling.
 
-sudo apt update && sudo apt install -y python3 python3-venv python3-pip curl wget screen git lsof
+SoftwareSSH client (e.g., Terminal on macOS/Linux, PuTTY on Windows).
+Hugging Face account (for model access—create a token with "Write" permissions).
 
-For Mac:bash
+Cost EstimateVPS/Cloud GPU: $0.34/hour (e.g., RunPod RTX 4090). Run 12 hours/day to keep costs low ($120/month).
 
-# Install Homebrew first if missing: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-brew install python
+Setup OptionsLocal Machine: If you have a compatible GPU.
+VPS (Recommended for beginners): Use providers like DigitalOcean, Contabo, or AWS.
+Cloud GPU (Best performance): RunPod or Vast.ai for on-demand GPUs.
 
-Verify Python (needs 3.10+):bash
+Step 1: Set Up Your EnvironmentOption 1: Local Setup (macOS/Linux)Open Terminal.
+Update packages:  
 
-python3 --version
+sudo apt update
 
-Install Node.js (v20.x), npm, & yarn:Linux/WSL:bash
+Option 2: VPS/Cloud SetupSign up for a provider (e.g., RunPod).
+Create an instance:Ubuntu 22.04.
+Add GPU if available.
+Fund account (crypto/card accepted).
 
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt update && sudo apt install -y nodejs
-curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
-echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list > /dev/null
-sudo apt update && sudo apt install -y yarn
+SSH into your server:  
 
-Mac:bash
+ssh root@<YOUR_SERVER_IP>
 
-brew install node && corepack enable && npm install -g yarn
+(Password or key as per provider.)
 
-Check 'em:bash
+Step 2: Install DependenciesRun these commands on your server/local machine:
 
-node -v  # Should be ~20.x
-npm -v   # Any recent
-yarn -v  # Any recent
+# Update system
+sudo apt update && sudo apt upgrade -y
 
-Step-by-Step: Install & Launch the NodeDo this in a fresh terminal (or VPS SSH).Start a Screen Session (VPS only—keeps it running detached):bash
+# Install core packages
+sudo apt install -y python3 python3-venv python3-pip curl wget screen git build-essential gcc g++ lsof nano unzip iproute2
+
+# Install Node.js and Yarn
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt install -y nodejs
+npm install -g yarn
+
+Verify:  
+
+node -v  # Should show v22.x
+yarn -v  # Should show latest
+
+Optional: Install tunneling tool (e.g., ngrok for login access):  
+
+# For ngrok (sign up at ngrok.com for free auth token)
+wget https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz
+tar xvzf ngrok-v3-stable-linux-amd64.tgz
+sudo mv ngrok /usr/local/bin/
+ngrok authtoken <YOUR_NGROK_TOKEN>
+
+Step 3: Clone and Set Up RL SwarmCreate a screen session (keeps your node running in background):  
 
 screen -S gensyn
 
-Detach later: Ctrl+A then D. Reattach: screen -r gensyn.
-Clone the RL-Swarm Repo:bash
+Clone the official repo:  
 
 git clone https://github.com/gensyn-ai/rl-swarm.git
-
-Hop into the Folder:bash
-
 cd rl-swarm
 
-Create & Activate Virtual Environment:bash
+Create a Python virtual environment:  
 
 python3 -m venv .venv
-source .venv/bin/activate  # Your prompt changes—means it's live
+source .venv/bin/activate
 
-Launch the Swarm Node! bash
+Install Python dependencies:  
+
+pip install -r requirements.txt
+
+Step 4: Configure and Run the NodeMake the run script executable:  
+
+chmod +x run_rl_swarm.sh
+
+Start the swarm:  
 
 ./run_rl_swarm.sh
 
-Handle the Prompts (Key Choices):Login Prompt: It'll say hit http://localhost:3000/. On local Mac? Open in browser. On VPS? See troubleshooting below for tunneling.
-Push to Hugging Face? Type N (No—keeps it simple).
-Model Name: Hit Enter for default (safe bet).
-AI Prediction Market? Type Y (Yes—unlocks earnings).
+Authentication:  The script will prompt login at http://localhost:3000.  
+If on VPS/cloud, use tunneling:  
 
-Pro Model Picks (Especially for Mac—avoid custom to dodge terminations):Gensyn/Qwen2.5-0.5B-Instruct
-Qwen/Qwen3-0.6B
-nvidia/AceInstruct-1.5B
-dnotitia/Smoothie-Qwen3-1.7B
-Gensyn/Qwen2.5-1.5B-Instruct
+# In a new terminal (or detach screen with Ctrl+A+D, then screen -r gensyn)
+ngrok http 3000
 
-Watch the logs scroll—your node is syncing and swarming. It generates files like swarm.pem for your ID.
+Copy the ngrok URL (e.g., https://abc123.ngrok.io) and open in browser.
 
-Post-Install: Wallet & Dashboard SetupHead to Gensyn Dashboard—connect your EOA wallet (MetaMask/Ethers on Sepolia testnet).
-Copy your swarm.pem to local if on VPS: scp username@your_ip:~/rl-swarm/swarm.pem ~/swarm.pem.
-Submit your Node ID there to claim points.
+Log in with GitHub/Hugging Face (first time setup).  
+Paste your Hugging Face token when prompted.  
+Confirm with 'Y' and Enter.
 
-Troubleshooting: Common Hiccups FixedIssue
-Quick Fix
-Can't access localhost:3000 on VPS
-1. Allow port: sudo apt install ufw -y && sudo ufw allow 22 && sudo ufw allow 3000/tcp && sudo ufw enable.
-2. Install Cloudflare Tunnel: wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb && sudo dpkg -i cloudflared-linux-amd64.deb.
-3. Run: cloudflared tunnel --url http://localhost:3000 (grab the link it spits out).
-"Terminated" Error
-In rl-swarm dir: deactivate && rm -rf .venv && python3 -m venv .venv && source .venv/bin/activate && ./run_rl_swarm.sh. Restart 1-2x or wait 5 mins.
-Out of Memory (OOM)
-Bump to ≥16GB RAM VPS or add swap: sudo fallocate -l 4G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile.
-Node Not Submitting Work
-Check ports open (lsof -i :3000), wallet connected, and logs: tail -f ~/.gensyn/logs/*.log.
-Daily Restart (Local PC)
-cd rl-swarm && python3 -m venv .venv && source .venv/bin/activate && ./run_rl_swarm.sh.
+Wallet/Key Generation:  The node will generate a swarm.pem key (your identity—back it up!).  
+Copy to local: scp root@<IP>:~/rl-swarm/swarm.pem ~/Downloads/  
+Note your Node ID and Node Name (displayed in terminal, e.g., "whistling hulking armadillo"). Save these for dashboard tracking!
 
-Optional: Level Up with Telegram Bot & RolesWant auto-notifications and swarm roles? (Takes ~10 mins extra.)Install Go:Linux: cd ~ && wget https://go.dev/dl/go1.24.0.linux-amd64.tar.gz && sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.24.0.linux-amd64.tar.gz && echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc && echo 'export GOPATH=$HOME/go' >> ~/.bashrc && echo 'export PATH=$PATH:$GOPATH/bin' >> ~/.bashrc && source ~/.bashrc && go version.
-Mac: brew install go.
+Detach screen: Ctrl+A+D. Reattach anytime: screen -r gensyn.
 
-Set Up Telegram Bot:Chat @BotFather → /newbot → Grab token (e.g., 84100000:AAGITsRXgxxxxNuP56-xxxxxxxxxxxxxxx).
-Message your bot, then hit https://api.telegram.org/botYOUR_TOKEN/getUpdates → Copy your chat id.
+Your node is now running! It will connect to the swarm, download models (e.g., Qwen2.5-0.5B), and start contributing.Step 5: Monitoring and MaintenanceLogs: Check in screen session: tail -f logs/swarm.log.  
+Dashboard: Visit Gensyn Testnet Dashboard and search by Node ID. Track wins, leaderboard position, and rewards.  
+Updates: Pull latest repo changes: git pull origin main && pip install -r requirements.txt. Restart with ./run_rl_swarm.sh.  
+Models: Edit config.yaml for custom models (e.g., add larger ones like 72B for better rewards).  
+Stop Node: screen -r gensyn, then Ctrl+C. For cloud, shut down pod to save costs.
 
-Install & Config gswarm:bash
+Leaderboard TipsRun consistently for higher scores.  
+Use efficient models to avoid OOM errors.  
+Join swarms like BlockAssist (Minecraft AI training—no node needed for playtesting).
 
-go install github.com/Deep-Commit/gswarm/cmd/gswarm@latest
-gswarm --version  # Verify
-gswarm  # Run: Enter token, chat ID, EOA address from dashboard
+TroubleshootingIssue
+Solution
+Batch size error
+Edit config.yaml: Set batch_size: 1 or lower. Restart.
+Tunneling fails
+Try alternatives: npx localtunnel --port 3000 or Cloudflared. Ensure ports open.
+Key generation fails
+Delete .venv and reinstall. Run python generate_keys.py manually.
+No rewards/leaderboard
+Verify Node ID in dashboard. Wait 10-15 mins for sync. Check Discord for swarm status.
+GPU not detected
+Install CUDA: sudo apt install nvidia-cuda-toolkit. Run nvidia-smi.
+Out of memory
+Reduce model size in config or upgrade GPU.
+Login loop
+Clear browser cache. Use incognito. If stuck, Ctrl+A+D, setup ngrok, retry step 4.
 
-Link for Roles:In Gensyn Discord (swarm-link channel): /link-telegram → Get code.
-To your bot: /verify {code}.
-Boom—roles auto-assigned for exclusive channels/updates.
+Common Fixes Script: For quick error resolution, run this one-liner (from community):  
 
-Next MovesMonitor: Tail logs and check dashboard for points.
-Scale: Run multiple nodes? VPS fleet it.
-Upgrade Later: Use our previous guide—git pull and venv refresh.
+curl -sSL https://raw.githubusercontent.com/zunxbt/installation/main/node.sh | bash
+
+Community ResourcesOfficial Docs: docs.gensyn.ai  
+Testnet: gensyn.ai/testnet  
+Discord: Join for support and updates.  
+GitHub Repo: github.com/gensyn-ai/rl-swarm  
+Twitter/X: Follow @gensyn_ai
+ for announcements.
+
+Contributing BackFound a bug? Improve this guide? Fork this repo and submit a PR!  Happy swarming!  Let's decentralize AI together. Questions? Ping us in Discord.Last updated: December 4, 2025. Gensyn Testnet Phase: RL Swarm v2 (GenRL backend with >100 environments).
 
